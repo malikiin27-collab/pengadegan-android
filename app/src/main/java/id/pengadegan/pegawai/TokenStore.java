@@ -1,0 +1,8 @@
+package id.pengadegan.pegawai;
+import android.content.Context;import android.security.keystore.*;import java.security.KeyStore;import javax.crypto.*;import javax.crypto.spec.GCMParameterSpec;import android.util.Base64;
+final class TokenStore {
+ static synchronized javax.crypto.SecretKey key() throws Exception {KeyStore ks=KeyStore.getInstance("AndroidKeyStore");ks.load(null);if(!ks.containsAlias("pengadegan_token")){KeyGenerator g=KeyGenerator.getInstance("AES","AndroidKeyStore");g.init(new KeyGenParameterSpec.Builder("pengadegan_token",KeyProperties.PURPOSE_ENCRYPT|KeyProperties.PURPOSE_DECRYPT).setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build());g.generateKey();}return (javax.crypto.SecretKey)ks.getKey("pengadegan_token",null);}
+ static synchronized void save(Context c,String token)throws Exception{Cipher x=Cipher.getInstance("AES/GCM/NoPadding");x.init(Cipher.ENCRYPT_MODE,key());String v=Base64.encodeToString(x.getIV(),Base64.NO_WRAP)+":"+Base64.encodeToString(x.doFinal(token.getBytes(java.nio.charset.StandardCharsets.UTF_8)),Base64.NO_WRAP);c.getSharedPreferences("native",0).edit().putString("token",v).commit();}
+ static synchronized String read(Context c){try{String v=c.getSharedPreferences("native",0).getString("token","");if(v.isEmpty())return "";String[] p=v.split(":",2);Cipher x=Cipher.getInstance("AES/GCM/NoPadding");x.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,Base64.decode(p[0],Base64.NO_WRAP)));return new String(x.doFinal(Base64.decode(p[1],Base64.NO_WRAP)),java.nio.charset.StandardCharsets.UTF_8);}catch(Exception e){return "";}}
+ static void clear(Context c){c.getSharedPreferences("native",0).edit().remove("token").commit();}
+}

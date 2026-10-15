@@ -1,0 +1,44 @@
+plugins { id 'com.android.application' }
+
+def signingFile = System.getenv('PENGADEGAN_KEYSTORE_FILE')
+def signingPassword = System.getenv('PENGADEGAN_STORE_PASSWORD')
+def signingAlias = System.getenv('PENGADEGAN_KEY_ALIAS')
+def signingKeyPassword = System.getenv('PENGADEGAN_KEY_PASSWORD')
+def canSignRelease = [signingFile, signingPassword, signingAlias, signingKeyPassword].every { it != null && !it.trim().isEmpty() }
+
+android {
+    namespace 'id.pengadegan.pegawai'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'id.pengadegan.pegawai' // Keep stable for updates; do not rename.
+        minSdk 26
+        targetSdk 35
+        versionCode 16
+        versionName '16.0.0'
+    }
+    signingConfigs {
+        release {
+            if (canSignRelease) {
+                storeFile file(signingFile)
+                storePassword signingPassword
+                keyAlias signingAlias
+                keyPassword signingKeyPassword
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (canSignRelease) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+dependencies {
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.webkit:webkit:1.12.1'
+}
